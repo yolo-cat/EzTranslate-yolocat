@@ -8,6 +8,9 @@
     "test": "jest",
     "build": "node build.js"
   },
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "devDependencies": {
     "esbuild": "^0.25.0",
     "jest": "^29.7.0",
