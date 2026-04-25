@@ -4,7 +4,7 @@
 
 This provides the complete code for the first version of the immersive translation script using the Gemini API.
 
-The code seamlessly integrates with Google's official Gemini 2.5/3.1 series routing. It defaults to **gemini-2.5-flash-lite**, which offers the best performance for translating large amounts of web content. The code also includes TDD security isolation and a fail-safe five-second timeout. \[1, 2\]
+The code seamlessly integrates with Google's official Gemini 2.5/3.1 series routing. It defaults to **gemini-flash-lite-latest**, which offers the best performance for translating large amounts of web content. The code also includes TDD security isolation and a fail-safe five-second timeout. \[1, 2\]
 
 ## ---
 
@@ -41,8 +41,8 @@ var ImmersiveTranslation = (() => {
   var DEFAULT_CONFIG = {
     api_key: "請在此填入您的_Google_API_KEY",
     base_url: "https://generativelanguage.googleapis.com/v1beta/models",
-    model_name: "gemini-2.5-flash-lite",
-    system_prompt: "You are a professional translator. Translate the following text into Traditional Chinese. Maintain the original meaning and tone."
+    model_name: "gemini-flash-lite-latest",
+    system_prompt: "You are a professional translator. Translate the input text into Traditional Chinese. Output ONLY the translated text. Do not include any preamble, explanation, or conversational filler."
   };
 
   // src/LlmService.js
@@ -61,7 +61,7 @@ var ImmersiveTranslation = (() => {
             contents: [{
               parts: [{ text: `${config.system_prompt}
 
-請翻譯以下這段文字：
+Text to translate:
 ${text}` }]
             }],
             generationConfig: {

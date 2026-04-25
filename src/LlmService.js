@@ -13,7 +13,7 @@ export const LlmService = {
                 timeout: 5000,
                 data: JSON.stringify({
                     contents: [{
-                        parts: [{ text: `${config.system_prompt}\n\n請翻譯以下這段文字：\n${text}` }]
+                        parts: [{ text: `${config.system_prompt}\n\nText to translate:\n${text}` }]
                     }],
                     generationConfig: {
                         temperature: 0.3

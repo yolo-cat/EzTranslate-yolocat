@@ -27,16 +27,16 @@
     `example: "sk-..."`  
   `base_url:`  
     `type: string`  
-    `description: "LLM API 的基礎網址，需相容 OpenAI 路由"`  
-    `default: "https://openai.com"`  
+    `description: "LLM API 的基礎網址"`  
+    `default: "https://generativelanguage.googleapis.com/v1beta/models"`  
   `model_name:`  
     `type: string`  
     `description: "指定的模型名稱"`  
-    `default: "gpt-4o-mini"`  
+    `default: "gemini-flash-lite-latest"`  
   `system_prompt:`  
     `type: string`  
     `description: "發送給 LLM 的翻譯指導語"`  
-    `default: "You are a professional translator. Translate the following text into Traditional Chinese. Maintain the original meaning and tone."`
+    `default: "You are a professional translator. Translate the input text into Traditional Chinese. Output ONLY the translated text. Do not include any preamble, explanation, or conversational filler."`
 
 ## **1.2 懸浮球位置 (Key: IMMERSIVE\_POS)**
 
