@@ -1,8 +1,10 @@
 import { DEFAULT_CONFIG } from './config.js';
 
 export const LlmService = {
-    async translate(text) {
+    async translate(textOrArray) {
         const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
+        const inputText = Array.isArray(textOrArray) ? JSON.stringify(textOrArray) : textOrArray;
+        
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 method: "POST",
@@ -10,24 +12,32 @@ export const LlmService = {
                 headers: {
                     "Content-Type": "application/json"
                 },
-                timeout: 5000,
+                timeout: 10000,
                 data: JSON.stringify({
                     system_instruction: {
                         parts: [{ text: config.system_prompt }]
                     },
                     contents: [{
-                        parts: [{ text: text }]
+                        parts: [{ text: inputText }]
                     }],
                     generationConfig: {
-                        temperature: 0.0
+                        temperature: 0.0,
+                        response_mime_type: "application/json"
                     }
                 }),
                 onload: function(response) {
                     if (response.status === 200) {
                         try {
                             const data = JSON.parse(response.responseText);
-                            const translatedText = data.candidates[0].content.parts[0].text;
-                            resolve(translatedText.trim());
+                            let translatedContent = data.candidates[0].content.parts[0].text;
+                            
+                            // 嘗試解析 JSON，如果失敗則視為單一字串
+                            try {
+                                const parsed = JSON.parse(translatedContent);
+                                resolve(parsed);
+                            } catch (e) {
+                                resolve(translatedContent.trim());
+                            }
                         } catch (e) {
                             reject(new Error("JSON 解析失敗"));
                         }
@@ -35,7 +45,7 @@ export const LlmService = {
                         reject(new Error(`API 錯誤: ${response.status}`));
                     }
                 },
-                ontimeout: function() { reject(new Error("Timeout after 5000ms")); },
+                ontimeout: function() { reject(new Error("Timeout after 10000ms")); },
                 onerror: function(err) { reject(new Error("網路請求失敗")); }
             });
         });

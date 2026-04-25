@@ -106,15 +106,33 @@ export const UiController = {
             return;
         }
 
-        for (const p of paragraphs) {
-            DomManager.setLoadingState(p, true);
+        const batchSize = 5;
+        for (let i = 0; i < paragraphs.length; i += batchSize) {
+            const batch = paragraphs.slice(i, i + batchSize);
+            batch.forEach(p => DomManager.setLoadingState(p, true));
+
             try {
-                const translatedText = await LlmService.translate(p.innerText.trim());
-                DomManager.injectTranslation(p, translatedText);
+                const textsToTranslate = batch.map(p => p.innerText.trim());
+                const results = await LlmService.translate(textsToTranslate);
+
+                if (Array.isArray(results)) {
+                    batch.forEach((p, index) => {
+                        if (results[index]) {
+                            DomManager.injectTranslation(p, results[index]);
+                        }
+                    });
+                } else if (typeof results === 'string' && batch.length === 1) {
+                    DomManager.injectTranslation(batch[0], results);
+                }
             } catch (error) {
-                console.error("[Immersive Translation] 翻譯失敗:", error);
+                console.error("[Immersive Translation] 批次翻譯失敗:", error);
             } finally {
-                DomManager.setLoadingState(p, false);
+                batch.forEach(p => DomManager.setLoadingState(p, false));
+            }
+
+            // 如果還有下一批，增加一個小的延遲以確保穩定性
+            if (i + batchSize < paragraphs.length) {
+                await new Promise(r => setTimeout(r, 1000));
             }
         }
     }

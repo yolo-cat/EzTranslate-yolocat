@@ -76,17 +76,19 @@
 `type: object`  
 `properties:`  
   `model: "{Config.model_name}"`  
-  `messages:`  
-    `- role: "system"`  
-      `content: "{Config.system_prompt}"`  
-    `- role: "user"`  
-      `content: "{paragraph_innerText}"`  
-  `stream: false`  
-  `temperature: 0.3`
+  `system_instruction:`
+    `parts:`
+      `- text: "{Config.system_prompt}"`
+  `contents:`  
+    `- parts:`  
+      `- text: "{JSON_stringified_paragraphs_or_single_text}"`  
+  `generationConfig:`
+    `temperature: 0.0`
+    `response_mime_type: "application/json"`
 
 ## **2.4 預期響應 (Response)**
 
-* **成功 (200 OK)**：回傳 HTTP 200，腳本將解析 JSON 並提取 `.candidates[0].content.parts[0].text` 的字串。  
+* **成功 (200 OK)**：回傳 HTTP 200，腳本將解析 JSON 並提取 `.candidates[0].content.parts[0].text`。由於設定了 `response_mime_type`，該內容應為可解析的 JSON 陣列。
 * **失敗 (非 200、超時或 onerror)**：callLlmApi 函數應立即拋出 Error 異常並觸發 Fail-safe。
 
 ## ---
@@ -99,10 +101,10 @@
 
 負責管理 LLM 通訊，內部不含任何 DOM 操作。
 
-* **translate(text: string): Promise\<string\>**  
-  * **輸入**：待翻譯的純文字。  
-  * **輸出**：翻譯後的字串。  
-  * **依賴**：調用 callLlmApi 函數。
+* **translate(textOrArray: string | string[]): Promise<string | string[]>**  
+  * **輸入**：待翻譯的純文字或字串陣列。  
+  * **輸出**：翻譯後的字串或字串陣列。  
+  * **依賴**：調用 GM_xmlhttpRequest。
 
 ## **🎨 3.2 元件 B：DomManager（網頁節點操作）**
 
@@ -124,8 +126,8 @@
   * **邏輯**：從 IMMERSIVE\_POS 讀取百分比，透過 fixed 定位渲染圓形懸浮球。  
 * **bindDragEvents(): void**  
   * **邏輯**：監聽懸浮球的 mousedown、mousemove 與 mouseup 事件，於放開鼠標時計算當前百分比位置，並寫入 IMMERSIVE\_POS。  
-* **onTranslateTriggered(callback: Function): void**  
-  * **邏輯**：當使用者點擊懸浮球且未發生大範圍拖曳時，觸發 callback。
+* **executeTranslation(): Promise<void>**  
+  * **邏輯**：當使用者點擊按鈕時，抓取段落並以「5 個為一組」進行批次翻譯。翻譯時需設置 Loading 狀態，完成後呼叫 DomManager 注入結果。批次間建議增加 1 秒延遲以規避 429 錯誤。
 
 ---
 
