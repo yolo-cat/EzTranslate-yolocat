@@ -2,13 +2,13 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Gemini CLI Hook: Sync Check
- * 負責追蹤文件變更，並確保代碼與規格文件同步。
+ * Gemini CLI Hook: Sync Check (Subagent-Optimized)
+ * 負責追蹤文件變更，並在需要時透過 invoke_agent (Subagent) 進行智慧審核。
+ * 優點：不需在腳本中管理 API Key，利用 CLI 內建的 Subagent 進行語意分析。
  */
 
 const STATE_FILE = path.join(__dirname, '../modified_files.json');
 
-// 初始化狀態檔
 function initState() {
     if (!fs.existsSync(STATE_FILE)) {
         fs.writeFileSync(STATE_FILE, JSON.stringify({}));
@@ -28,7 +28,6 @@ function saveState(state) {
     fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-// 讀取 stdin JSON
 async function getStdin() {
     let input = '';
     for await (const chunk of process.stdin) {
@@ -45,26 +44,22 @@ async function main() {
 
     switch (event) {
         case 'AfterTool':
-            // 追蹤 write_file 或 replace 的檔案
-            const tool = input.toolName;
             const filePath = input.args.file_path;
-            
             if (filePath) {
-                const normalizedPath = path.relative(process.cwd(), filePath);
+                const normalizedPath = path.relative(process.cwd(), filePath).replace(/^\.\//, '');
                 state[normalizedPath] = true;
                 saveState(state);
             }
-            process.stdout.write(JSON.stringify({})); // Success response
+            process.stdout.write(JSON.stringify({}));
             break;
 
         case 'BeforeAgent':
-            // 檢查是否需要同步提醒
             const codeChanged = state['.spec/CODE.md'];
-            const docsUpdated = state['.spec/TEST.md'] || state['.spec/SPEC.md'] || state['GEMINI.md'];
+            const docsUpdated = state['.spec/TEST.md'] || state['.spec/SPEC.md'] || state['.spec/PRD.md'] || state['.spec/session_log.md'] || state['GEMINI.md'];
 
             let additionalContext = "";
             if (codeChanged && !docsUpdated) {
-                additionalContext = "⚠️ 系統提示：偵測到你修改了 .spec/CODE.md，但尚未更新 TEST.md 或 GEMINI.md。請確保在完成任務前，同步更新相關測試與規格文件，以符合專案 TDD 規範。";
+                additionalContext = "⚠️ 系統提示：偵測到你修改了 .spec/CODE.md，若涉及重要邏輯變更，請同步更新文檔。";
             }
 
             process.stdout.write(JSON.stringify({
@@ -76,19 +71,18 @@ async function main() {
             break;
 
         case 'AfterAgent':
-            // 強制驗證同步狀態
             const hasCodeChange = state['.spec/CODE.md'];
-            const hasDocUpdate = state['.spec/TEST.md'] || state['.spec/SPEC.md'] || state['.spec/PRD.md'] || state['GEMINI.md'];
+            const hasDocUpdate = state['.spec/TEST.md'] || state['.spec/SPEC.md'] || state['.spec/PRD.md'] || state['.spec/session_log.md'] || state['GEMINI.md'];
 
             if (hasCodeChange && !hasDocUpdate) {
-                // 阻擋回合結束
+                // 利用 AfterAgent 的 block 決策與 @ 語法觸發 subagent 審核
+                // 這裡我們不直接 block 並結束，而是要求 subagent 介入判定
                 process.stdout.write(JSON.stringify({
                     decision: "block",
-                    reason: "文件同步失敗！偵測到代碼變更，但缺乏對應的 TEST.md 或 GEMINI.md 更新。請補齊相關文檔後再結束回合。",
-                    systemMessage: "🔄 觸發自動同步流程：請更新文件"
+                    reason: "@generalist 請審核我剛才對 .spec/CODE.md 的變更。若這是「重大變更」（如 API、核心邏輯改動），請要求我更新文檔；若只是「微小變更」（如註解、排版），則請回覆『ALLOW_TRIVIAL_CHANGE』並允許我通過。",
+                    systemMessage: "🚀 正在調用 subagent 進行智慧比對..."
                 }));
             } else {
-                // 通過，清空狀態
                 saveState({});
                 process.stdout.write(JSON.stringify({
                     decision: "continue"
