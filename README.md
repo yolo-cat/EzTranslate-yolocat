@@ -1,4 +1,4 @@
-# 🚀 極簡沉浸式翻譯
+# 極簡沉浸式翻譯
 
 [![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](https://github.com/yolo-cat/mini-translation)
 <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer">![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)</a>
@@ -8,18 +8,18 @@
 
 ---
 
-## ✨ 核心特色
+## 核心特色
 
-- 📖 **沉浸式對照**：直接在原生段落下方插入譯文，無需切換分頁。
-- ⚡ **免設定即用**：沒 API Key？沒問題！預設自動啟用 **Google 翻譯備援**。
-- 🤖 **Gemini API 模式**：填入 Key 後自動升級為 `gemini-flash-lite-latest` 模型。
-- 🔒 **安全隱私**：具備物理沙盒隔離機制，API Key 僅存於本地，絕不外洩給網頁。
-- 🎯 **智慧 UI**：可自由拖拽的懸浮翻譯球，位置記憶並提供當前引擎提示。
-- ⏳ **穩定抗壓**：內建批次翻譯與頻率限制機制，有效規避 429 錯誤。
+- **沉浸式對照**：直接在原生段落下方插入譯文，無需切換分頁。
+- **免設定即用**：沒 API Key？沒問題！預設自動啟用 **Google 翻譯備援**。
+- **Gemini API 模式**：填入 Key 後自動升級為 `gemini-flash-lite-latest` 模型。
+- **安全隱私**：具備物理沙盒隔離機制，API Key 僅存於本地，絕不外洩給網頁。
+- **智慧 UI**：可自由拖拽的懸浮翻譯球，位置記憶並提供當前引擎提示。
+- **穩定抗壓**：內建批次翻譯與頻率限制機制，有效規避 429 錯誤。
 
 ---
 
-## 🛠️ 安裝步驟
+## 安裝步驟
 
 ### 1. 安裝 Tampermonkey 擴充功能
 首先，您需要一個 Userscript 管理器。請依據您的瀏覽器安裝對應版本：
@@ -36,7 +36,7 @@
 
 ---
 
-## 📖 使用指南
+## 使用指南
 
 ### 快速開始
 1. 安裝腳本後，開啟任何英文網頁。
@@ -54,7 +54,7 @@
 
 ---
 
-## ⚙️ 開發者資訊
+## 開發者資訊
 
 - **原始碼**: 位於 `src/` 目錄，採用 ESM 模組化。
 - **打包工具**: 使用 `esbuild` 將模組封裝為單體 Userscript。
@@ -62,11 +62,11 @@
 
 ---
 
-## 📜 免責聲明與授權
+## 免責聲明與授權
 
 - 本專案僅供學習與研究使用，翻譯過程中產生的 API 消耗由使用者自行承擔。
 - 本專案採用 [MIT License](LICENSE) 授權。
 
 ---
 
-**⭐ 覺得好用嗎？歡迎到 [GitHub 儲存庫](https://github.com/yolo-cat/mini-translation) 給我們一個 Star！**
+** 覺得好用嗎？歡迎到 [GitHub 儲存庫](https://github.com/yolo-cat/mini-translation) 給我一個 Star！**
