@@ -36,7 +36,7 @@
   `system_prompt:`  
     `type: string`  
     `description: "發送給 LLM 的翻譯指導語"`  
-    `default: "You are a professional translator. Translate the input text into Traditional Chinese. Output ONLY the translated text. Do not include any preamble, explanation, or conversational filler."`
+    `default: "Translate the input to Traditional Chinese. Output ONLY the translation. No preamble, no explanation, no chat."`
 
 ## **1.2 懸浮球位置 (Key: IMMERSIVE\_POS)**
 

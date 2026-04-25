@@ -42,7 +42,7 @@ var ImmersiveTranslation = (() => {
     api_key: "請在此填入您的_Google_API_KEY",
     base_url: "https://generativelanguage.googleapis.com/v1beta/models",
     model_name: "gemini-flash-lite-latest",
-    system_prompt: "You are a professional translator. Translate the input text into Traditional Chinese. Output ONLY the translated text. Do not include any preamble, explanation, or conversational filler."
+    system_prompt: "Translate the input to Traditional Chinese. Output ONLY the translation. No preamble, no explanation, no chat."
   };
 
   // src/LlmService.js
@@ -58,14 +58,18 @@ var ImmersiveTranslation = (() => {
           },
           timeout: 5e3,
           data: JSON.stringify({
+            system_instruction: {
+              parts: [{
+                text: config.system_prompt
+              }]
+            },
             contents: [{
-              parts: [{ text: `${config.system_prompt}
-
-Text to translate:
-${text}` }]
+              parts: [{
+                text: text
+              }]
             }],
             generationConfig: {
-              temperature: 0.3
+              temperature: 0
             }
           }),
           onload: function(response) {

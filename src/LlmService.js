@@ -12,11 +12,14 @@ export const LlmService = {
                 },
                 timeout: 5000,
                 data: JSON.stringify({
+                    system_instruction: {
+                        parts: [{ text: config.system_prompt }]
+                    },
                     contents: [{
-                        parts: [{ text: `${config.system_prompt}\n\nText to translate:\n${text}` }]
+                        parts: [{ text: text }]
                     }],
                     generationConfig: {
-                        temperature: 0.3
+                        temperature: 0.0
                     }
                 }),
                 onload: function(response) {
