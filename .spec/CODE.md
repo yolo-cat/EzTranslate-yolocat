@@ -88,21 +88,23 @@ var ImmersiveTranslation = (() => {
   var LlmService = {
     getEngineName() {
       const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
-      if (!config.api_key || config.api_key === DEFAULT_CONFIG.api_key) {
+      const apiKey = (config.api_key || "").trim();
+      if (!apiKey || apiKey === DEFAULT_CONFIG.api_key) {
         return "Google 機器翻譯";
       }
       return "Gemini API";
     },
     async translate(textOrArray) {
       const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
-      if (!config.api_key || config.api_key === DEFAULT_CONFIG.api_key) {
+      const apiKey = (config.api_key || "").trim();
+      if (!apiKey || apiKey === DEFAULT_CONFIG.api_key) {
         return GoogleService.translate(textOrArray);
       }
       const inputText = Array.isArray(textOrArray) ? JSON.stringify(textOrArray) : textOrArray;
       return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
           method: "POST",
-          url: `${config.base_url}/${config.model_name}:generateContent?key=${config.api_key}`,
+          url: `${config.base_url}/${config.model_name}:generateContent?key=${apiKey}`,
           headers: {
             "Content-Type": "application/json"
           },
@@ -197,10 +199,11 @@ var ImmersiveTranslation = (() => {
       const pos = GM_getValue("IMMERSIVE_POS", { x_percent: 90, y_percent: 85 });
       GM_registerMenuCommand("⚙️ 設定 API 密鑰", () => {
         const currentConfig = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
-        const key = prompt("請輸入您的 Google Gemini API Key:", currentConfig.api_key);
-        if (key) {
-          currentConfig.api_key = key;
+        const key = prompt("請輸入您的 Google Gemini API Key (留空則使用 Google 翻譯):", currentConfig.api_key);
+        if (key !== null) {
+          currentConfig.api_key = key.trim();
           GM_setValue("IMMERSIVE_CONFIG", currentConfig);
+          alert(`已切換為：${currentConfig.api_key ? "Gemini API" : "Google 機器翻譯"}`);
         }
       });
       GM_addStyle(`

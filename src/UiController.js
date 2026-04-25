@@ -12,10 +12,11 @@ export const UiController = {
         // 註冊油猴選單
         GM_registerMenuCommand("⚙️ 設定 API 密鑰", () => {
             const currentConfig = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
-            const key = prompt("請輸入您的 Google Gemini API Key:", currentConfig.api_key);
-            if (key) {
-                currentConfig.api_key = key;
+            const key = prompt("請輸入您的 Google Gemini API Key (留空則使用 Google 翻譯):", currentConfig.api_key);
+            if (key !== null) {
+                currentConfig.api_key = key.trim();
                 GM_setValue("IMMERSIVE_CONFIG", currentConfig);
+                alert(`已切換為：${currentConfig.api_key ? "Gemini API" : "Google 機器翻譯"}`);
             }
         });
 

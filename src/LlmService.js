@@ -4,7 +4,8 @@ import { GoogleService } from './GoogleService.js';
 export const LlmService = {
     getEngineName() {
         const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
-        if (!config.api_key || config.api_key === DEFAULT_CONFIG.api_key) {
+        const apiKey = (config.api_key || "").trim();
+        if (!apiKey || apiKey === DEFAULT_CONFIG.api_key) {
             return "Google 機器翻譯";
         }
         return "Gemini API";
@@ -12,9 +13,10 @@ export const LlmService = {
 
     async translate(textOrArray) {
         const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
+        const apiKey = (config.api_key || "").trim();
         
         // 分流邏輯：如果沒有有效 Key，使用 Google 翻譯
-        if (!config.api_key || config.api_key === DEFAULT_CONFIG.api_key) {
+        if (!apiKey || apiKey === DEFAULT_CONFIG.api_key) {
             return GoogleService.translate(textOrArray);
         }
 
@@ -23,7 +25,7 @@ export const LlmService = {
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 method: "POST",
-                url: `${config.base_url}/${config.model_name}:generateContent?key=${config.api_key}`,
+                url: `${config.base_url}/${config.model_name}:generateContent?key=${apiKey}`,
                 headers: {
                     "Content-Type": "application/json"
                 },
