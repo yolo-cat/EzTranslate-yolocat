@@ -62,11 +62,19 @@
 *   **Result**：產出 README.md。
 
 **[11] 修復安裝連結失效與 .gitignore 調整**
-*   **Prompt / 需求**：README.md 安裝連結不可用，專案缺乏 /dist。
-*   **Action**：
-    1.  修改 `.gitignore`：從忽略清單中移除 `dist/`，允許將編譯後的腳本提交至 GitHub。
-    2.  重新構建：執行 `npm run build` 確保 `dist/` 下產出最新的腳本。
-*   **Result**：解決了因 git 忽略導致 GitHub 上缺乏 `dist` 目錄的問題，現在安裝超連結將指向正確的 Raw 檔案路徑。
+*   **Prompt / 需求**：README.md 安裝連結不可用。
+*   **Action**：從 `.gitignore` 移除 `dist/` 並重新構建。
+*   **Result**：Raw URL 連結生效。
+
+**[12] 優化使用者體驗 (README.md 跳轉行為)**
+*   **Action**：Markdown 連結改為 HTML `<a>` 標籤並配置 `target="_blank"`。
+*   **Result**：提升瀏覽連續性。
+
+**[13] 說明安裝連結可用性條件**
+*   **Prompt / 需求**：README.md 中的安裝超連結無法連上。
+*   **原因分析**：該連結指向 GitHub 遠端 Raw URL。由於目前代碼尚未 Push 到遠端 `yolo-cat/mini-translation` 儲存庫，GitHub 尚未存在該檔案，因此會導致無法連線或 404。
+*   **解決建議**：使用者需先將目前的本機變更（包含 `dist/`）Push 至 GitHub 遠端，該連結才會正式生效。
+*   **Result**：確認了連結邏輯正確，需透過 Git 操作啟動服務。
 
 ---
 
