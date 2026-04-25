@@ -27,9 +27,11 @@
 
 * **實例 A-1：成功翻譯與資料解析**  
   test('當 API 回傳 HTTP 200，應正確解析並返回翻譯文字', async () \=\> {  
-    *// Given: 設定 Stub API 回傳模擬的 OpenAI 格式*  
-    const mockResponse \= { choices: \[{ message: { content: "你好" } }\] };  
-    global.callLlmApi \= jest.fn().mockResolvedValue(mockResponse.choices\[0\].message.content);
+    *// Given: 設定 Stub API 回傳模擬的 Gemini 格式*  
+    const mockResponse \= { candidates: \[{ content: { parts: \[{ text: "你好" }\] } }\] };  
+    global.GM\_xmlhttpRequest \= jest.fn().mockImplementation(({ onload }) \=\> {
+        onload({ status: 200, responseText: JSON.stringify(mockResponse) });
+    });
 
     *// When: 執行翻譯*  
     const result \= await LlmService.translate("Hello");

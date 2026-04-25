@@ -63,13 +63,13 @@
 ## **2.1 請求定義**
 
 * **Method**: POST  
-* **URL**: {Config.base\_url}/chat/completions  
-* **Timeout**: 5000 (5 秒，超時即視為失敗並觸發 Fail-safe) \[agile3uncles\]
+* **URL**: {Config.base\_url}/{Config.model_name}:generateContent?key={Config.api_key}  
+* **Timeout**: 5000 (5 秒，使用 GM_xmlhttpRequest 原生 timeout 屬性，超時即視為失敗並觸發 Fail-safe) [agile3uncles]
 
-## **2.2 請求標頭 (Headers)**
+## **2.2 請求標頭與權限 (Headers & Permissions)**
 
-`Authorization: Bearer {Config.api_key}`  
-`Content-Type: application/json`
+* **Required Permission**: `@connect generativelanguage.googleapis.com` (或根據 base_url 動態調整)
+* **Content-Type**: `application/json`
 
 ## **2.3 請求本體 (Body)**
 
@@ -86,8 +86,8 @@
 
 ## **2.4 預期響應 (Response)**
 
-* **成功 (200 OK)**：回傳 HTTP 200，腳本將解析 JSON 並提取 .choices\[0\].message.content 的字串。  
-* **失敗 (非 200 或超時)**：callLlmApi 函數應立即拋出 Error 異常。
+* **成功 (200 OK)**：回傳 HTTP 200，腳本將解析 JSON 並提取 `.candidates[0].content.parts[0].text` 的字串。  
+* **失敗 (非 200、超時或 onerror)**：callLlmApi 函數應立即拋出 Error 異常並觸發 Fail-safe。
 
 ## ---
 

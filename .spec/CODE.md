@@ -21,6 +21,7 @@ To use this code:
 *`// @version      1.1`*  
 *`// @description  使用自備 Gemini API 實現沉浸式上下對照翻譯，具備物理沙盒隔離防外洩保護`*  
 *`// @match        *://*/*`*  
+*`// @connect      generativelanguage.googleapis.com`*  
 *`// @grant        GM_xmlhttpRequest`*  
 *`// @grant        GM_setValue`*  
 *`// @grant        GM_getValue`*  
@@ -35,7 +36,7 @@ To use this code:
     `// ==========================================`  
     `const DEFAULT_CONFIG = {`  
         `api_key: "請在此填入您的_Google_API_KEY",`  
-        `base_url: "https://googleapis.com", // Gemini 專屬路徑`  
+        `base_url: "https://generativelanguage.googleapis.com/v1beta/models", // Gemini 專屬路徑`  
         `model_name: "gemini-2.5-flash-lite", // 亦可手動更改為 gemini-3.1-flash-lite-preview`  
         `system_prompt: "You are a professional translator. Translate the following text into Traditional Chinese. Maintain the original meaning and tone."`  
     `};`
@@ -55,16 +56,14 @@ To use this code:
     `const LlmService = {`  
         `async translate(text) {`  
             `return new Promise((resolve, reject) => {`  
-                `// 5 秒超時 TDD 邊界控制`  
-                `const timeout = setTimeout(() => reject(new Error("Timeout after 5000ms")), 5000);`
-
-                `// 嚴格使用 GM_xmlhttpRequest，與網頁原生 fetch 物理隔離，防範 API 外洩`  
+                `// 使用 GM_xmlhttpRequest 原生 timeout 與物理隔離，防範 API 外洩`  
                 `GM_xmlhttpRequest({`  
                     `method: "POST",`  
                     ``url: `${config.base_url}/${config.model_name}:generateContent?key=${config.api_key}`,``  
                     `headers: {`  
                         `"Content-Type": "application/json"`  
                     `},`  
+                    `timeout: 5000,`  
                     `data: JSON.stringify({`  
                         `contents: [{`  
                             ``parts: [{ text: `${config.system_prompt}\n\n請翻譯以下這段文字：\n${text}` }]``  
@@ -74,7 +73,6 @@ To use this code:
                         `}`  
                     `}),`  
                     `onload: function(response) {`  
-                        `clearTimeout(timeout);`  
                         `if (response.status === 200) {`  
                             `try {`  
                                 `const data = JSON.parse(response.responseText);`  
@@ -88,7 +86,8 @@ To use this code:
                             ``reject(new Error(`API 錯誤: ${response.status}`));``  
                         `}`  
                     `},`  
-                    `onerror: function(err) { clearTimeout(timeout); reject(err); }`  
+                    `ontimeout: function() { reject(new Error("Timeout after 5000ms")); },`  
+                    `onerror: function(err) { reject(new Error("網路請求失敗")); }`  
                 `});`  
             `});`  
         `}`  
@@ -145,6 +144,7 @@ To use this code:
             `let isDragging = false;`  
             `btn.addEventListener('mousedown', (e) => {`  
                 `isDragging = false;`  
+                `e.preventDefault(); // 防止拖曳時選取到網頁文字`  
                 `const shiftX = e.clientX - btn.getBoundingClientRect().left;`  
                 `const shiftY = e.clientY - btn.getBoundingClientRect().top;`
 
