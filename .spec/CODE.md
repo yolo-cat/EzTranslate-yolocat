@@ -45,10 +45,59 @@ var ImmersiveTranslation = (() => {
     system_prompt: "Translate the input array of texts into Traditional Chinese. Return ONLY a JSON array of strings, where each string is the translation of the corresponding input text. Maintain the exact same order. No explanation, no markdown blocks, just the raw JSON array."
   };
 
+  // src/GoogleService.js
+  var GoogleService = {
+    async translate(textOrArray) {
+      const isArray = Array.isArray(textOrArray);
+      const texts = isArray ? textOrArray : [textOrArray];
+      const results = await Promise.all(texts.map((text) => this.fetchTranslation(text)));
+      return isArray ? results : results[0];
+    },
+    async fetchTranslation(text) {
+      return new Promise((resolve, reject) => {
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-TW&dt=t&q=${encodeURIComponent(text)}`;
+        GM_xmlhttpRequest({
+          method: "GET",
+          url,
+          timeout: 1e4,
+          onload: function(response) {
+            if (response.status === 200) {
+              try {
+                const data = JSON.parse(response.responseText);
+                const translatedText = data[0].map((item) => item[0]).join("");
+                resolve(translatedText);
+              } catch (e) {
+                reject(new Error("Google JSON 解析失敗"));
+              }
+            } else {
+              reject(new Error(`Google API 錯誤: ${response.status}`));
+            }
+          },
+          ontimeout: function() {
+            reject(new Error("Google API 超時"));
+          },
+          onerror: function() {
+            reject(new Error("Google 網路請求失敗"));
+          }
+        });
+      });
+    }
+  };
+
   // src/LlmService.js
   var LlmService = {
+    getEngineName() {
+      const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
+      if (!config.api_key || config.api_key === DEFAULT_CONFIG.api_key) {
+        return "Google 機器翻譯";
+      }
+      return "Gemini API";
+    },
     async translate(textOrArray) {
       const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
+      if (!config.api_key || config.api_key === DEFAULT_CONFIG.api_key) {
+        return GoogleService.translate(textOrArray);
+      }
       const inputText = Array.isArray(textOrArray) ? JSON.stringify(textOrArray) : textOrArray;
       return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
@@ -180,6 +229,22 @@ var ImmersiveTranslation = (() => {
             #immersive-translate-btn:active {
                 transform: scale(0.95);
             }
+            .immersive-translate-toast {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(31, 41, 55, 0.9);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 13px;
+                z-index: 2147483647;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                pointer-events: none;
+                transition: opacity 0.3s;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
         `);
       const btn = document.createElement("div");
       btn.id = "immersive-translate-btn";
@@ -227,6 +292,16 @@ var ImmersiveTranslation = (() => {
       });
     },
     isTranslating: false,
+    showToast(message) {
+      const toast = document.createElement("div");
+      toast.className = "immersive-translate-toast";
+      toast.innerText = message;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 300);
+      }, 2e3);
+    },
     async executeTranslation() {
       if (this.isTranslating) {
         console.log("Translation already in progress, skipping...");
@@ -237,6 +312,8 @@ var ImmersiveTranslation = (() => {
         console.log("No new paragraphs found to translate.");
         return;
       }
+      const engineName = LlmService.getEngineName();
+      this.showToast(`目前使用：${engineName}`);
       this.isTranslating = true;
       const batchSize = 5;
       try {

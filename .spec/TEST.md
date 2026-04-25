@@ -21,32 +21,28 @@
 
 **🧪 2\. 測試案例定義（以 Jest 偽代碼呈現）**
 
-## **模組 A：LlmService（核心翻譯與防外洩邊界）**
+## **模組 A：LlmService（核心路由與 Google 備援）**
 
-**目的**：驗證 5 秒超時、Fail-safe 安全失敗，以及**物理隔離**的防外洩防禦。
+**目的**：驗證引擎自動切換、批次解析以及 10 秒超時 Fail-safe。
 
-* **實例 A-1：成功翻譯與資料解析**  
-  test('當 API 回傳 HTTP 200，應正確解析並返回翻譯文字', async () \=\> {  
-    *// Given: 設定 Stub API 回傳模擬的 Gemini 格式*  
-    const mockResponse \= { candidates: \[{ content: { parts: \[{ text: "你好" }\] } }\] };  
-    global.GM\_xmlhttpRequest \= jest.fn().mockImplementation(({ onload }) \=\> {
-        onload({ status: 200, responseText: JSON.stringify(mockResponse) });
-    });
-
-    *// When: 執行翻譯*  
-    const result \= await LlmService.translate("Hello");
-
-    *// Then: 斷言返回結果*  
-    expect(result).toBe("你好");  
+* **實例 A-1：Google 備援路由測試**
+  test('當 API Key 缺失或為預設值時，應自動呼叫 GoogleService', async () => {
+    // Given: Mock GoogleService
+    // When: LlmService.translate
+    // Then: 斷言 GoogleService 被調用
   });
 
-* **實例 A-2：超時防禦（5 秒 Fail-safe）**  
-  test('當 API 請求超過 5000ms，應拋出超時 Error 觸發安全失敗', async () \=\> {  
-    *// Given: 模擬 API 拋出超時錯誤*  
-    global.callLlmApi \= jest.fn().mockRejectedValue(new Error("Timeout after 5000ms"));
+* **實例 A-2：批次解析測試 (JSON Array)**
+  test('當 Gemini 回傳 JSON 陣列字串時，應正確解析為翻譯陣列', async () => {
+    // Given: Mock API 回傳 ["譯文1", "譯文2"]
+    // When: LlmService.translate(["Text1", "Text2"])
+    // Then: 返回 ["譯文1", "譯文2"]
+  });
 
-    *// When & Then: 斷言服務會捕捉並向上拋出錯誤*  
-    await expect(LlmService.translate("Hello")).rejects.toThrow("Timeout after 5000ms");  
+* **實例 A-3：超時防禦（10 秒 Fail-safe）**  
+  test('當 API 請求超過 10000ms，應拋出超時 Error', async () \=\> {  
+    *// Given: 模擬 10s 超時*  
+    *// When & Then: 斷言拋出 "Timeout after 10000ms"*  
   });
 
 * **實例 A-3：防外洩物理隔離（強制禁止原生 Fetch）**  

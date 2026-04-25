@@ -19,7 +19,7 @@ export const UiController = {
             }
         });
 
-        // 使用 GM_addStyle 定義按鈕樣式
+        // 使用 GM_addStyle 定義按鈕與 Toast 樣式
         GM_addStyle(`
             #immersive-translate-btn {
                 position: fixed;
@@ -45,6 +45,22 @@ export const UiController = {
             }
             #immersive-translate-btn:active {
                 transform: scale(0.95);
+            }
+            .immersive-translate-toast {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(31, 41, 55, 0.9);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 13px;
+                z-index: 2147483647;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                pointer-events: none;
+                transition: opacity 0.3s;
+                font-family: system-ui, -apple-system, sans-serif;
             }
         `);
 
@@ -101,6 +117,17 @@ export const UiController = {
 
     isTranslating: false,
 
+    showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'immersive-translate-toast';
+        toast.innerText = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    },
+
     async executeTranslation() {
         if (this.isTranslating) {
             console.log("Translation already in progress, skipping...");
@@ -112,6 +139,9 @@ export const UiController = {
             console.log("No new paragraphs found to translate.");
             return;
         }
+
+        const engineName = LlmService.getEngineName();
+        this.showToast(`目前使用：${engineName}`);
 
         this.isTranslating = true;
         const batchSize = 5;

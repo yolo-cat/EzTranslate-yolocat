@@ -1,8 +1,23 @@
 import { DEFAULT_CONFIG } from './config.js';
+import { GoogleService } from './GoogleService.js';
 
 export const LlmService = {
+    getEngineName() {
+        const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
+        if (!config.api_key || config.api_key === DEFAULT_CONFIG.api_key) {
+            return "Google 機器翻譯";
+        }
+        return "Gemini API";
+    },
+
     async translate(textOrArray) {
         const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
+        
+        // 分流邏輯：如果沒有有效 Key，使用 Google 翻譯
+        if (!config.api_key || config.api_key === DEFAULT_CONFIG.api_key) {
+            return GoogleService.translate(textOrArray);
+        }
+
         const inputText = Array.isArray(textOrArray) ? JSON.stringify(textOrArray) : textOrArray;
         
         return new Promise((resolve, reject) => {

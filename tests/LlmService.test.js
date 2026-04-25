@@ -1,5 +1,6 @@
 import { jest, describe, test, expect, beforeEach } from '@jest/globals';
 import { LlmService } from '../src/LlmService.js';
+import { GoogleService } from '../src/GoogleService.js';
 
 describe('LlmService', () => {
     beforeEach(() => {
@@ -10,6 +11,19 @@ describe('LlmService', () => {
             model_name: "test_model",
             system_prompt: "test_prompt"
         });
+    });
+
+    test('當 API Key 缺失時，應自動路由至 GoogleService', async () => {
+        global.GM_getValue.mockReturnValue({
+            api_key: "請在此填入您的_Google_API_KEY"
+        });
+        const spy = jest.spyOn(GoogleService, 'translate').mockResolvedValue("Google 翻譯");
+
+        const result = await LlmService.translate("Hello");
+        
+        expect(spy).toHaveBeenCalledWith("Hello");
+        expect(result).toBe("Google 翻譯");
+        spy.mockRestore();
     });
 
     test('當 API 回傳 HTTP 200，應正確解析並返回翻譯文字（單一字串）', async () => {

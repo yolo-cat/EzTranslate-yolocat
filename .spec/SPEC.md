@@ -97,16 +97,25 @@
 
 為了提升單元測試的可行性，系統切分為 3 個高內聚、低耦合的核心元件 \[agile3uncles\]：
 
-## **🛠️ 3.1 元件 A：LlmService（核心翻譯邏輯）**
+## **🛠️ 3.1 元件 A：LlmService（核心翻譯路由）**
 
-負責管理 LLM 通訊，內部不含任何 DOM 操作。
+負責管理翻譯引擎的分流與通訊，內部不含任何 DOM 操作。
 
+* **getEngineName(): string**
+  * **邏輯**：檢查 `api_key` 是否為預設值。如果是，返回 "Google 機器翻譯"；否則返回 "Gemini API"。
 * **translate(textOrArray: string | string[]): Promise<string | string[]>**  
+  * **邏輯**：若 `api_key` 為預設值，轉發請求至 `GoogleService`；否則使用 Gemini API。
   * **輸入**：待翻譯的純文字或字串陣列。  
-  * **輸出**：翻譯後的字串或字串陣列。  
-  * **依賴**：調用 GM_xmlhttpRequest。
+  * **輸出**：翻譯後的字串或字串陣列。
 
-## **🎨 3.2 元件 B：DomManager（網頁節點操作）**
+## **🛠️ 3.2 元件 B：GoogleService（Google 備援引擎）**
+
+負責與 Google Translate 免費接口通訊。
+
+* **translate(textOrArray: string | string[]): Promise<string | string[]>**
+  * **邏輯**：調用 Google Translate 單一翻譯接口。若輸入為陣列，則併發發送請求並匯整結果。
+
+## **🎨 3.3 元件 C：DomManager（網頁節點操作）**
 
 負責網頁解析與譯文 DOM 注入。
 
@@ -127,7 +136,12 @@
 * **bindDragEvents(): void**  
   * **邏輯**：監聽懸浮球的 mousedown、mousemove 與 mouseup 事件，於放開鼠標時計算當前百分比位置，並寫入 IMMERSIVE\_POS。  
 * **executeTranslation(): Promise<void>**  
-  * **邏輯**：當使用者點擊按鈕時，抓取段落並以「5 個為一組」進行批次翻譯。翻譯時需設置 Loading 狀態，完成後呼叫 DomManager 注入結果。批次間建議增加 1 秒延遲以規避 429 錯誤。
+  * **邏輯**：當使用者點擊按鈕時，抓取段落並以「5 個為一組」進行批次翻譯。
+  * **提示**：開始時呼叫 `showToast` 顯示目前使用的翻譯引擎（由 `LlmService.getEngineName()` 取得）。
+  * **細節**：翻譯時需設置 Loading 狀態，完成後呼叫 DomManager 注入結果。批次間建議增加 4 秒延遲以規避 Gemini API 的 429 錯誤。
+
+* **showToast(message: string): void**
+  * **邏輯**：在畫面中央下方彈出一個半透明提示框，顯示訊息 2 秒後自動消失。
 
 ---
 
