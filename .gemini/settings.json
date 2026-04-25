@@ -2,18 +2,18 @@
   "hooks": {
     "AfterTool": [
       {
-        "command": "node .gemini/hooks/sync-check.js AfterTool",
+        "command": "node .gemini/hooks/sync-check.cjs AfterTool",
         "matchers": ["write_file", "replace"]
       }
     ],
     "BeforeAgent": [
       {
-        "command": "node .gemini/hooks/sync-check.js BeforeAgent"
+        "command": "node .gemini/hooks/sync-check.cjs BeforeAgent"
       }
     ],
     "AfterAgent": [
       {
-        "command": "node .gemini/hooks/sync-check.js AfterAgent"
+        "command": "node .gemini/hooks/sync-check.cjs AfterAgent"
       }
     ]
   }

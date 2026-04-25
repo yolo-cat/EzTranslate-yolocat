@@ -19,7 +19,7 @@ To use this code:
 // ==UserScript==
 // @name         極簡沉浸式翻譯 (Gemini API 專用版)
 // @namespace    https://github.com/yolo-cat/mini-translation
-// @version      1.2.0
+// @version      1.2.1
 // @description  使用自備 Gemini API 實現沉浸式上下對照翻譯，具備物理沙盒隔離防外洩保護
 // @author       Gemini CLI
 // @match        *://*/*
@@ -32,6 +32,8 @@ To use this code:
 // @license      MIT
 // @run-at       document-idle
 // @supportURL   https://github.com/yolo-cat/mini-translation/issues
+// @updateURL    https://raw.githubusercontent.com/yolo-cat/mini-translation/main/dist/immersive-translation.user.js
+// @downloadURL  https://raw.githubusercontent.com/yolo-cat/mini-translation/main/dist/immersive-translation.user.js
 // ==/UserScript==
 
 var ImmersiveTranslation = (() => {

@@ -2,6 +2,8 @@
 
 ## Project Overview
 這是一個為 Tampermonkey 設計的輕量級、具備物理沙盒隔離的沉浸式翻譯腳本。利用 Google Gemini API 將網頁段落翻譯為繁體中文，並以雙語對照方式呈現。
+*   **Repository**: https://github.com/yolo-cat/mini-translation
+*   **Auto-Update**: 透過 GitHub Raw 連結實現自動檢查更新。
 
 ## 📂 Directory Structure & Key Files
 *   **.spec/**: 核心開發規格與追溯文檔 (SSOT)。

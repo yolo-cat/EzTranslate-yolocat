@@ -38,12 +38,27 @@
 
 **[6] 導入 Tampermonkey GitHub 專案最佳實踐**
 *   **Prompt / 需求**：實作應遵循 Tampermonkey 專業開發規範。
-*   **Action**：
-    1.  完善 Metadata Header：加入 `@license`、`@supportURL`、`@run-at` 與精確的 `@namespace`。
-    2.  CSS 模組化：改用 `GM_addStyle` 替代內嵌 style，並優化 UI 互動樣式（hover/active 效果）。
-    3.  健壯性優化：在 `DomManager` 中加入空值檢查與類別管理，提升 DOM 操作的安全性。
-    4.  構建系統升級：`build.js` 現在能自動同步 `package.json` 版本至腳本 Header。
+*   **Action**：完善 Metadata Header，CSS 模組化，提升 DOM 操作安全性，並升級構建系統。
 *   **Result**：代碼結構達到專業 Userscript 儲存庫標準，且全數通過 TDD 驗證。
+
+**[7] 建立 GitHub 自動更新機制**
+*   **Prompt / 需求**：將 GitHub 作為腳本自動更新源。
+*   **Action**：加入 `@updateURL` 與 `@downloadURL` 標籤。
+*   **Result**：腳本具備自動更新能力。
+
+**[8] 修正專案 GitHub 網址**
+*   **Prompt / 需求**：修正為正確的專案網址 `yolo-cat/mini-translation`。
+*   **Action**：更新 `src/header.js` 並同步構建。
+*   **Result**：所有外部連結已指向正確位址。
+
+**[9] 修復 Hook 執行異常 (CommonJS vs ESM)**
+*   **Prompt / 需求**：調查為何 Hook 流程未遵循同步更新 `GEMINI.md`。
+*   **Action**：
+    1.  調查發現：專案開啟了 `"type": "module"`，導致使用 `require` 的 `.js` Hook 腳本執行失敗。
+    2.  修復：將 `sync-check.js` 重新命名為 `sync-check.cjs`。
+    3.  更新配置：修改 `.gemini/settings.json` 指向新的 `.cjs` 檔案。
+    4.  同步更新：補齊 `GEMINI.md` 遺漏的 GitHub 連結與自動更新說明。
+*   **Result**：Hook 系統恢復正常運作，且能正確偵測並強制執行雙軌同步規則。
 
 ---
 
