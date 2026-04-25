@@ -99,41 +99,67 @@ export const UiController = {
         });
     },
 
+    isTranslating: false,
+
     async executeTranslation() {
+        if (this.isTranslating) {
+            console.log("Translation already in progress, skipping...");
+            return;
+        }
+
         const paragraphs = DomManager.extractParagraphs();
         if (paragraphs.length === 0) {
             console.log("No new paragraphs found to translate.");
             return;
         }
 
+        this.isTranslating = true;
         const batchSize = 5;
-        for (let i = 0; i < paragraphs.length; i += batchSize) {
-            const batch = paragraphs.slice(i, i + batchSize);
-            batch.forEach(p => DomManager.setLoadingState(p, true));
 
-            try {
-                const textsToTranslate = batch.map(p => p.innerText.trim());
-                const results = await LlmService.translate(textsToTranslate);
+        try {
+            for (let i = 0; i < paragraphs.length; i += batchSize) {
+                const batch = paragraphs.slice(i, i + batchSize);
+                batch.forEach(p => DomManager.setLoadingState(p, true));
 
-                if (Array.isArray(results)) {
-                    batch.forEach((p, index) => {
-                        if (results[index]) {
-                            DomManager.injectTranslation(p, results[index]);
+                let retryCount = 0;
+                const maxRetries = 1;
+
+                while (retryCount <= maxRetries) {
+                    try {
+                        const textsToTranslate = batch.map(p => p.innerText.trim());
+                        const results = await LlmService.translate(textsToTranslate);
+
+                        if (Array.isArray(results)) {
+                            batch.forEach((p, index) => {
+                                if (results[index]) {
+                                    DomManager.injectTranslation(p, results[index]);
+                                }
+                            });
+                        } else if (typeof results === 'string' && batch.length === 1) {
+                            DomManager.injectTranslation(batch[0], results);
                         }
-                    });
-                } else if (typeof results === 'string' && batch.length === 1) {
-                    DomManager.injectTranslation(batch[0], results);
+                        break; // 成功則跳出重試迴圈
+                    } catch (error) {
+                        if (error.message.includes("429") && retryCount < maxRetries) {
+                            console.warn(`[Immersive Translation] 觸發頻率限制，等待 10 秒後重試... (${retryCount + 1}/${maxRetries})`);
+                            await new Promise(r => setTimeout(r, 10000));
+                            retryCount++;
+                        } else {
+                            console.error("[Immersive Translation] 批次翻譯失敗:", error);
+                            break;
+                        }
+                    }
                 }
-            } catch (error) {
-                console.error("[Immersive Translation] 批次翻譯失敗:", error);
-            } finally {
-                batch.forEach(p => DomManager.setLoadingState(p, false));
-            }
 
-            // 如果還有下一批，增加一個小的延遲以確保穩定性
-            if (i + batchSize < paragraphs.length) {
-                await new Promise(r => setTimeout(r, 1000));
+                batch.forEach(p => DomManager.setLoadingState(p, false));
+
+                // 增加延遲以符合 15 RPM 限制 (60/15 = 4s)
+                if (i + batchSize < paragraphs.length) {
+                    await new Promise(r => setTimeout(r, 4000));
+                }
             }
+        } finally {
+            this.isTranslating = false;
         }
     }
 };

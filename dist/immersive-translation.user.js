@@ -23,14 +23,15 @@ var ImmersiveTranslation = (() => {
   var DEFAULT_CONFIG = {
     api_key: "請在此填入您的_Google_API_KEY",
     base_url: "https://generativelanguage.googleapis.com/v1beta/models",
-    model_name: "gemini-2.5-flash-lite",
-    system_prompt: "You are a professional translator. Translate the following text into Traditional Chinese. Maintain the original meaning and tone."
+    model_name: "gemini-flash-lite-latest",
+    system_prompt: "Translate the input array of texts into Traditional Chinese. Return ONLY a JSON array of strings, where each string is the translation of the corresponding input text. Maintain the exact same order. No explanation, no markdown blocks, just the raw JSON array."
   };
 
   // src/LlmService.js
   var LlmService = {
-    async translate(text) {
+    async translate(textOrArray) {
       const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
+      const inputText = Array.isArray(textOrArray) ? JSON.stringify(textOrArray) : textOrArray;
       return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
           method: "POST",
@@ -38,24 +39,30 @@ var ImmersiveTranslation = (() => {
           headers: {
             "Content-Type": "application/json"
           },
-          timeout: 5e3,
+          timeout: 1e4,
           data: JSON.stringify({
+            system_instruction: {
+              parts: [{ text: config.system_prompt }]
+            },
             contents: [{
-              parts: [{ text: `${config.system_prompt}
-
-請翻譯以下這段文字：
-${text}` }]
+              parts: [{ text: inputText }]
             }],
             generationConfig: {
-              temperature: 0.3
+              temperature: 0,
+              response_mime_type: "application/json"
             }
           }),
           onload: function(response) {
             if (response.status === 200) {
               try {
                 const data = JSON.parse(response.responseText);
-                const translatedText = data.candidates[0].content.parts[0].text;
-                resolve(translatedText.trim());
+                let translatedContent = data.candidates[0].content.parts[0].text;
+                try {
+                  const parsed = JSON.parse(translatedContent);
+                  resolve(parsed);
+                } catch (e) {
+                  resolve(translatedContent.trim());
+                }
               } catch (e) {
                 reject(new Error("JSON 解析失敗"));
               }
@@ -64,7 +71,7 @@ ${text}` }]
             }
           },
           ontimeout: function() {
-            reject(new Error("Timeout after 5000ms"));
+            reject(new Error("Timeout after 10000ms"));
           },
           onerror: function(err) {
             reject(new Error("網路請求失敗"));
@@ -201,22 +208,57 @@ ${text}` }]
         }, { once: true });
       });
     },
+    isTranslating: false,
     async executeTranslation() {
+      if (this.isTranslating) {
+        console.log("Translation already in progress, skipping...");
+        return;
+      }
       const paragraphs = DomManager.extractParagraphs();
       if (paragraphs.length === 0) {
         console.log("No new paragraphs found to translate.");
         return;
       }
-      for (const p of paragraphs) {
-        DomManager.setLoadingState(p, true);
-        try {
-          const translatedText = await LlmService.translate(p.innerText.trim());
-          DomManager.injectTranslation(p, translatedText);
-        } catch (error) {
-          console.error("[Immersive Translation] 翻譯失敗:", error);
-        } finally {
-          DomManager.setLoadingState(p, false);
+      this.isTranslating = true;
+      const batchSize = 5;
+      try {
+        for (let i = 0; i < paragraphs.length; i += batchSize) {
+          const batch = paragraphs.slice(i, i + batchSize);
+          batch.forEach((p) => DomManager.setLoadingState(p, true));
+          let retryCount = 0;
+          const maxRetries = 1;
+          while (retryCount <= maxRetries) {
+            try {
+              const textsToTranslate = batch.map((p) => p.innerText.trim());
+              const results = await LlmService.translate(textsToTranslate);
+              if (Array.isArray(results)) {
+                batch.forEach((p, index) => {
+                  if (results[index]) {
+                    DomManager.injectTranslation(p, results[index]);
+                  }
+                });
+              } else if (typeof results === "string" && batch.length === 1) {
+                DomManager.injectTranslation(batch[0], results);
+              }
+              break;
+            } catch (error) {
+              if (error.message.includes("429") && retryCount < maxRetries) {
+                console.warn(`[Immersive Translation] 觸發頻率限制，等待 10 秒後重試... (${retryCount + 1}/${maxRetries})`);
+                await new Promise((r) => setTimeout(r, 1e4));
+                retryCount++;
+              } else {
+                console.error("[Immersive Translation] 批次翻譯失敗:", error);
+                break;
+              }
+            }
+          }
+          batch.forEach((p) => DomManager.setLoadingState(p, false));
+          if (i + batchSize < paragraphs.length) {
+            await new Promise((r) => setTimeout(r, 4e3));
+          }
         }
+      } finally {
+        this.isTranslating = false;
       }
     }
   };

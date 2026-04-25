@@ -60,14 +60,10 @@ var ImmersiveTranslation = (() => {
           timeout: 1e4,
           data: JSON.stringify({
             system_instruction: {
-              parts: [{
-                text: config.system_prompt
-              }]
+              parts: [{ text: config.system_prompt }]
             },
             contents: [{
-              parts: [{
-                text: inputText
-              }]
+              parts: [{ text: inputText }]
             }],
             generationConfig: {
               temperature: 0,
@@ -230,36 +226,57 @@ var ImmersiveTranslation = (() => {
         }, { once: true });
       });
     },
+    isTranslating: false,
     async executeTranslation() {
+      if (this.isTranslating) {
+        console.log("Translation already in progress, skipping...");
+        return;
+      }
       const paragraphs = DomManager.extractParagraphs();
       if (paragraphs.length === 0) {
         console.log("No new paragraphs found to translate.");
         return;
       }
+      this.isTranslating = true;
       const batchSize = 5;
-      for (let i = 0; i < paragraphs.length; i += batchSize) {
-        const batch = paragraphs.slice(i, i + batchSize);
-        batch.forEach((p) => DomManager.setLoadingState(p, true));
-        try {
-          const textsToTranslate = batch.map((p) => p.innerText.trim());
-          const results = await LlmService.translate(textsToTranslate);
-          if (Array.isArray(results)) {
-            batch.forEach((p, index) => {
-              if (results[index]) {
-                DomManager.injectTranslation(p, results[index]);
+      try {
+        for (let i = 0; i < paragraphs.length; i += batchSize) {
+          const batch = paragraphs.slice(i, i + batchSize);
+          batch.forEach((p) => DomManager.setLoadingState(p, true));
+          let retryCount = 0;
+          const maxRetries = 1;
+          while (retryCount <= maxRetries) {
+            try {
+              const textsToTranslate = batch.map((p) => p.innerText.trim());
+              const results = await LlmService.translate(textsToTranslate);
+              if (Array.isArray(results)) {
+                batch.forEach((p, index) => {
+                  if (results[index]) {
+                    DomManager.injectTranslation(p, results[index]);
+                  }
+                });
+              } else if (typeof results === "string" && batch.length === 1) {
+                DomManager.injectTranslation(batch[0], results);
               }
-            });
-          } else if (typeof results === "string" && batch.length === 1) {
-            DomManager.injectTranslation(batch[0], results);
+              break;
+            } catch (error) {
+              if (error.message.includes("429") && retryCount < maxRetries) {
+                console.warn(`[Immersive Translation] 觸發頻率限制，等待 10 秒後重試... (${retryCount + 1}/${maxRetries})`);
+                await new Promise((r) => setTimeout(r, 1e4));
+                retryCount++;
+              } else {
+                console.error("[Immersive Translation] 批次翻譯失敗:", error);
+                break;
+              }
+            }
           }
-        } catch (error) {
-          console.error("[Immersive Translation] 批次翻譯失敗:", error);
-        } finally {
           batch.forEach((p) => DomManager.setLoadingState(p, false));
+          if (i + batchSize < paragraphs.length) {
+            await new Promise((r) => setTimeout(r, 4e3));
+          }
         }
-        if (i + batchSize < paragraphs.length) {
-          await new Promise((r) => setTimeout(r, 1e3));
-        }
+      } finally {
+        this.isTranslating = false;
       }
     }
   };
