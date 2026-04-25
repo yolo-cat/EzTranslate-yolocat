@@ -72,9 +72,17 @@
 
 **[13] 說明安裝連結可用性條件**
 *   **Prompt / 需求**：README.md 中的安裝超連結無法連上。
-*   **原因分析**：該連結指向 GitHub 遠端 Raw URL。由於目前代碼尚未 Push 到遠端 `yolo-cat/mini-translation` 儲存庫，GitHub 尚未存在該檔案，因此會導致無法連線或 404。
-*   **解決建議**：使用者需先將目前的本機變更（包含 `dist/`）Push 至 GitHub 遠端，該連結才會正式生效。
-*   **Result**：確認了連結邏輯正確，需透過 Git 操作啟動服務。
+*   **原因分析**：指向遠端 Raw URL，需 Push 後生效。
+
+**[14] 解決 GitHub Branch Protection 限制與 PR 流程**
+*   **問題**：`git push origin main` 失敗，回報「不允許 Merge Commits」且「必須透過 Pull Request 變更」。
+*   **現狀分析**：本機存在 `618d7bd` 的 Merge Commit，且遠端 `main` 分支受保護。
+*   **建議解決方案**：
+    1.  建立新分支：`git checkout -b feature/tdd-modular-refactor`。
+    2.  線性化歷史：使用 `git rebase origin/main` 消除 Merge Commit。
+    3.  發布分支：`git push origin feature/tdd-modular-refactor`。
+    4.  開啟 PR：在 GitHub 上將該分支併入 `main`。
+*   **Result**：確認了符合專業協作流程的發布路徑。
 
 ---
 
