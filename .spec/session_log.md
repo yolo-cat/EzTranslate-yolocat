@@ -57,12 +57,16 @@
 *   **Result**：Hook 系統恢復正常，雙軌同步規則生效。
 
 **[10] 製作使用者引導手冊 (README.md)**
-*   **Prompt / 需求**：製作圖文並茂的 README.md 提供其他使用者依循使用。
+*   **Prompt / 需求**：製作圖文並茂的 README.md。
+*   **Action**：設計 Markdown 結構並提供安裝連結。
+*   **Result**：產出 README.md。
+
+**[11] 修復安裝連結失效與 .gitignore 調整**
+*   **Prompt / 需求**：README.md 安裝連結不可用，專案缺乏 /dist。
 *   **Action**：
-    1.  設計 Markdown 結構：包含徽章 (Badges)、核心特色、詳細安裝步驟與使用圖解說明。
-    2.  整合 GitHub 自動更新：在安裝步驟中直接提供 Raw URL 安裝連結。
-    3.  提供開發者視角：說明 TDD 架構與構建工具鏈。
-*   **Result**：產出了具備專業開源質感的 README.md，提升專案的可讀性與易用性。
+    1.  修改 `.gitignore`：從忽略清單中移除 `dist/`，允許將編譯後的腳本提交至 GitHub。
+    2.  重新構建：執行 `npm run build` 確保 `dist/` 下產出最新的腳本。
+*   **Result**：解決了因 git 忽略導致 GitHub 上缺乏 `dist` 目錄的問題，現在安裝超連結將指向正確的 Raw 檔案路徑。
 
 ---
 
