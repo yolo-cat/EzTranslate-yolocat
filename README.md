@@ -12,7 +12,7 @@
 
 - 📖 **沉浸式對照**：直接在原生段落下方插入譯文，無需切換分頁。
 - ⚡ **免設定即用**：沒 API Key？沒問題！預設自動啟用 **Google 翻譯備援**。
-- 🤖 **Gemini 驅動**：填入 Key 後自動升級為 `gemini-flash-lite-latest` 模型，極速且精準。
+- 🤖 **Gemini API 模式**：填入 Key 後自動升級為 `gemini-flash-lite-latest` 模型。
 - 🔒 **安全隱私**：具備物理沙盒隔離機制，API Key 僅存於本地，絕不外洩給網頁。
 - 🎯 **智慧 UI**：可自由拖拽的懸浮翻譯球，位置記憶並提供當前引擎提示。
 - ⏳ **穩定抗壓**：內建批次翻譯與頻率限制機制，有效規避 429 錯誤。
@@ -43,7 +43,7 @@
 2. 點擊右下角藍色圓形 **「譯」** 按鈕。
 3. 系統會提示「目前使用：Google 機器翻譯」並開始工作。
 
-### 進階優化：設定 Gemini API 密鑰
+### 進階：設定 Gemini API 密鑰
 1. 前往 <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a> 免費申請您的 Gemini API Key。
 2. 在瀏覽器點擊 **Tampermonkey 圖示**。
 3. 找到「極簡沉浸式翻譯」，點擊選單中的 **「⚙️ 設定 API 密鑰」**。
@@ -54,9 +54,8 @@
 
 ---
 
-## ⚙️ 開發者資訊 (TDD 架構)
+## ⚙️ 開發者資訊
 
-本專案採用 **文檔驅動 (BDD)** 與 **測試驅動 (TDD)** 流程開發：
 - **原始碼**: 位於 `src/` 目錄，採用 ESM 模組化。
 - **打包工具**: 使用 `esbuild` 將模組封裝為單體 Userscript。
 - **品質保證**: 內建 Jest 測試環境，執行 `npm test` 即可驗證核心邏輯。
