@@ -44,7 +44,7 @@ async function main() {
     let state = readState();
 
     switch (event) {
-        case 'afterTool':
+        case 'AfterTool':
             // 追蹤 write_file 或 replace 的檔案
             const tool = input.toolName;
             const filePath = input.args.file_path;
@@ -57,7 +57,7 @@ async function main() {
             process.stdout.write(JSON.stringify({})); // Success response
             break;
 
-        case 'beforeAgent':
+        case 'BeforeAgent':
             // 檢查是否需要同步提醒
             const codeChanged = state['.spec/CODE.md'];
             const docsUpdated = state['.spec/TEST.md'] || state['.spec/SPEC.md'] || state['GEMINI.md'];
@@ -75,7 +75,7 @@ async function main() {
             }));
             break;
 
-        case 'afterAgent':
+        case 'AfterAgent':
             // 強制驗證同步狀態
             const hasCodeChange = state['.spec/CODE.md'];
             const hasDocUpdate = state['.spec/TEST.md'] || state['.spec/SPEC.md'] || state['.spec/PRD.md'] || state['GEMINI.md'];
