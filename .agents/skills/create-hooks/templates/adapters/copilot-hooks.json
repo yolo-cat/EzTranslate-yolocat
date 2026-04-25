@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "preToolUse": [
+    {
+      "type": "command",
+      "bash": "node .gemini/hooks/universal-hook.js",
+      "timeoutSec": 5
+    }
+  ],
+  "postToolUse": [
+    {
+      "type": "command",
+      "bash": "node .gemini/hooks/universal-hook.js",
+      "timeoutSec": 5
+    }
+  ]
+}

@@ -92,6 +92,14 @@
     3.  同步更新 `GEMINI.md` 中的環境說明。
 *   **Result**：`npm test` 全數通過，專案框架與開發文檔完成同步。
 
+**[16] Hook 機制測試與配置結構升級**
+*   **Prompt / 需求**：測試 Hook 同步機制並調整配置。
+*   **Action**：
+    1.  建立 `src/test-hook.js` 觸發 Hook。
+    2.  升級 `.gemini/settings.json` 的 Hook 配置結構，由字串形式改為物件陣列以提升擴充性。
+    3.  於 `.gemini/hooks/sync-check.cjs` 加入 Debug 紀錄。
+*   **Result**：Hook 成功偵測到變更並觸發警示，配置結構優化完成。
+
 ---
 
 ## 🏛️ 里程碑摘要 (Archived Milestones)

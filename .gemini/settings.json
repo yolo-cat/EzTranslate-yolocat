@@ -2,18 +2,38 @@
   "hooks": {
     "AfterTool": [
       {
-        "command": "node .gemini/hooks/sync-check.cjs AfterTool",
-        "matchers": ["write_file", "replace"]
+        "matcher": "write_file|replace",
+        "hooks": [
+          {
+            "name": "sync-check-after-tool",
+            "type": "command",
+            "command": "node .gemini/hooks/sync-check.cjs AfterTool"
+          }
+        ]
       }
     ],
     "BeforeAgent": [
       {
-        "command": "node .gemini/hooks/sync-check.cjs BeforeAgent"
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "sync-check-before-agent",
+            "type": "command",
+            "command": "node .gemini/hooks/sync-check.cjs BeforeAgent"
+          }
+        ]
       }
     ],
     "AfterAgent": [
       {
-        "command": "node .gemini/hooks/sync-check.cjs AfterAgent"
+        "matcher": "*",
+        "hooks": [
+          {
+            "name": "sync-check-after-agent",
+            "type": "command",
+            "command": "node .gemini/hooks/sync-check.cjs AfterAgent"
+          }
+        ]
       }
     ]
   }
