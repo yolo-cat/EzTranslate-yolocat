@@ -68,8 +68,8 @@
 
 ## **2.2 請求標頭與權限 (Headers & Permissions)**
 
-* **Required Permission**: `@connect generativelanguage.googleapis.com` (或根據 base_url 動態調整)
-* **Content-Type**: `application/json`
+* **Required Permission**: `@connect generativelanguage.googleapis.com`, `@connect translate.googleapis.com`
+* **Content-Type**: `application/json` (Gemini) / `application/x-www-form-urlencoded` (Google)
 
 ## **2.3 請求本體 (Body)**
 

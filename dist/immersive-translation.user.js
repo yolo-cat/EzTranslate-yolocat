@@ -6,6 +6,7 @@
 // @author       Gemini CLI
 // @match        *://*/*
 // @connect      generativelanguage.googleapis.com
+// @connect      translate.googleapis.com
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
