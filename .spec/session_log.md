@@ -84,6 +84,14 @@
     4.  開啟 PR：在 GitHub 上將該分支併入 `main`。
 *   **Result**：確認了符合專業協作流程的發布路徑。
 
+**[15] 修復 Jest ESM 測試與同步文件**
+*   **Prompt / 需求**：修復測試環境並確保 Hook 同步。
+*   **Action**：
+    1.  `git pull --rebase` 同步遠端變更（README 優化與依賴更新）。
+    2.  更新 `package.json` 中的 `test` 指令，加入 `NODE_OPTIONS=--experimental-vm-modules` 以支援 ESM。
+    3.  同步更新 `GEMINI.md` 中的環境說明。
+*   **Result**：`npm test` 全數通過，專案框架與開發文檔完成同步。
+
 ---
 
 ## 🏛️ 里程碑摘要 (Archived Milestones)

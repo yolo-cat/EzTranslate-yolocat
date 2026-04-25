@@ -24,7 +24,7 @@
 *   **Runtime**: Node.js (ESM).
 *   **Testing**: Jest + JSDOM.
 *   **Bundler**: esbuild (用於將模組封裝為 IIFE Userscript)。
-*   **Command**: `npm test` (驗證邏輯), `npm run build` (構建腳本)。
+*   **Command**: `NODE_OPTIONS=--experimental-vm-modules npm test` (驗證邏輯), `npm run build` (構建腳本)。
 
 ## 🤖 AI Agent Loop Workflow (Hooks)
 本專案透過 **Gemini CLI Hooks** 強制執行「文檔驅動開發」：

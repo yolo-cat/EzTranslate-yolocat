@@ -1,3 +1,6 @@
 {
-  "package.json": true
+  "package.json": true,
+  "src/index.js": true,
+  "GEMINI.md": true,
+  ".spec/session_log.md": true
 }

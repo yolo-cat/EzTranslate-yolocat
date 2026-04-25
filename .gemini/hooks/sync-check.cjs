@@ -34,7 +34,11 @@ async function getStdin() {
     for await (const chunk of process.stdin) {
         input += chunk;
     }
-    return JSON.parse(input);
+    try {
+        return input ? JSON.parse(input) : {};
+    } catch (e) {
+        return {};
+    }
 }
 
 const event = process.argv[2];
@@ -50,7 +54,7 @@ async function main() {
 
     switch (event) {
         case 'AfterTool':
-            const filePath = input.args.file_path;
+            const filePath = input?.args?.file_path;
             if (filePath) {
                 const normalizedPath = path.relative(process.cwd(), filePath).replace(/^\.\//, '');
                 state[normalizedPath] = true;
