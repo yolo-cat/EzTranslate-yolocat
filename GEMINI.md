@@ -25,6 +25,7 @@ This repository contains the specifications, design documents, and the initial M
 
 ## Usage & Building
 The primary artifact is the userscript located in `.spec/CODE.md`.
+**Build Status**: Modularized with TDD verification (All tests passed).
 
 To use the script:
 1. Install the Tampermonkey extension.
