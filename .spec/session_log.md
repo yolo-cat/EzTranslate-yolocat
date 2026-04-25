@@ -53,12 +53,16 @@
 
 **[9] 修復 Hook 執行異常 (CommonJS vs ESM)**
 *   **Prompt / 需求**：調查為何 Hook 流程未遵循同步更新 `GEMINI.md`。
+*   **Action**：調查、更名為 `.cjs`、更新配置並補齊 `GEMINI.md`。
+*   **Result**：Hook 系統恢復正常，雙軌同步規則生效。
+
+**[10] 製作使用者引導手冊 (README.md)**
+*   **Prompt / 需求**：製作圖文並茂的 README.md 提供其他使用者依循使用。
 *   **Action**：
-    1.  調查發現：專案開啟了 `"type": "module"`，導致使用 `require` 的 `.js` Hook 腳本執行失敗。
-    2.  修復：將 `sync-check.js` 重新命名為 `sync-check.cjs`。
-    3.  更新配置：修改 `.gemini/settings.json` 指向新的 `.cjs` 檔案。
-    4.  同步更新：補齊 `GEMINI.md` 遺漏的 GitHub 連結與自動更新說明。
-*   **Result**：Hook 系統恢復正常運作，且能正確偵測並強制執行雙軌同步規則。
+    1.  設計 Markdown 結構：包含徽章 (Badges)、核心特色、詳細安裝步驟與使用圖解說明。
+    2.  整合 GitHub 自動更新：在安裝步驟中直接提供 Raw URL 安裝連結。
+    3.  提供開發者視角：說明 TDD 架構與構建工具鏈。
+*   **Result**：產出了具備專業開源質感的 README.md，提升專案的可讀性與易用性。
 
 ---
 
