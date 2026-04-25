@@ -17,6 +17,12 @@ This repository contains the specifications, design documents, and the initial M
 *   **Test-Driven Development (TDD)**: Development requires writing tests (mocking `GM_*` APIs and using JSDOM) before implementing business logic.
 *   **Physical Isolation**: Relies on the native Tampermonkey sandbox (`GM_xmlhttpRequest`) rather than frontend encryption to protect API keys from host webpage interception.
 
+## AI Agent Loop Workflow (Hooks)
+本專案導入了 **Gemini CLI Hooks** 攔截機制，確保「持續改進」與「文件同步」：
+*   **Sync Check Hook**: 監聽 `AfterTool`, `BeforeAgent`, `AfterAgent` 事件。
+*   **強制同步規則**: 當 AI 修改了 `.spec/CODE.md` 時，Hook 會要求同回合內必須同步更新 `.spec/TEST.md` 或 `GEMINI.md`。
+*   **自癒迴圈**: 若 AI 忘記更新文件，`AfterAgent` Hook 會自動攔截並退回重做，確保代碼與規格永遠同步。
+
 ## Usage & Building
 The primary artifact is the userscript located in `.spec/CODE.md`.
 
