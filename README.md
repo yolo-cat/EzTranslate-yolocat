@@ -1,4 +1,4 @@
-# 🚀 極簡沉浸式翻譯 (Gemini API 專用版)
+# 🚀 極簡沉浸式翻譯
 
 [![Version](https://img.shields.io/badge/version-1.2.1-blue.svg)](https://github.com/yolo-cat/mini-translation)
 <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer">![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)</a>
