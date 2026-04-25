@@ -7,6 +7,9 @@
 // @match        *://*/*
 // @connect      generativelanguage.googleapis.com
 // @connect      translate.googleapis.com
+// @connect      translate.google.com
+// @connect      .googleapis.com
+// @connect      .google.com
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
