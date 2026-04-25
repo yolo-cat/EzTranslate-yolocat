@@ -3,12 +3,16 @@ import fs from 'fs';
 import path from 'path';
 
 async function build() {
-    const header = fs.readFileSync('./src/header.js', 'utf8');
+    const pkg = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+    let header = fs.readFileSync('./src/header.js', 'utf8');
     
+    // 同步 package.json 版本到 header
+    header = header.replace(/@version\s+[\d\.]+/, `@version      ${pkg.version}`);
+
     const result = await esbuild.build({
         entryPoints: ['./src/index.js'],
         bundle: true,
-        minify: false, // Keep it readable for Tampermonkey users
+        minify: false, 
         format: 'iife',
         charset: 'utf8',
         write: false,
@@ -24,24 +28,29 @@ async function build() {
 
     const distPath = './dist/immersive-translation.user.js';
     fs.writeFileSync(distPath, finalCode);
-    console.log(`Build successful: ${distPath}`);
+    console.log(`[Build] Success: ${distPath} (v${pkg.version})`);
 
-    // Sync back to .spec/CODE.md
-    let codeMd = fs.readFileSync('./.spec/CODE.md', 'utf8');
-    const startMarker = '*`// ==UserScript==`*';
-    const endMarker = '`})();`';
+    // 同步更新 .spec/CODE.md
+    updateSpecCode(finalCode);
+}
+
+function updateSpecCode(code) {
+    const specPath = './.spec/CODE.md';
+    if (!fs.existsSync(specPath)) return;
+
+    let content = fs.readFileSync(specPath, 'utf8');
+    const marker = '```javascript';
+    const parts = content.split(marker);
     
-    // We need to be careful with formatting in CODE.md. 
-    // The current CODE.md has code blocks with backticks and asterisks.
-    // For simplicity, I will just output the plain code to dist and let the user know.
-    // BUT the plan says "synchronized back to .spec/CODE.md".
-    
-    // Let's try a simple replacement of the code block.
-    // Since CODE.md has a specific style (backticks around every line in some versions), 
-    // I'll just replace the main sections.
+    if (parts.length >= 2) {
+        const afterCode = parts[1].split('```')[1] || '';
+        const newContent = parts[0] + marker + '\n' + code + '\n```' + afterCode;
+        fs.writeFileSync(specPath, newContent);
+        console.log(`[Build] Synchronized to ${specPath}`);
+    }
 }
 
 build().catch(err => {
-    console.error(err);
+    console.error('[Build] Failed:', err);
     process.exit(1);
 });

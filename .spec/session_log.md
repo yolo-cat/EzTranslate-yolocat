@@ -26,6 +26,25 @@
 *   **Action**：創建本文件 `session_log.md` 並初始化結構與規則。
 *   **Result**：日誌系統建立完成。
 
+**[4] 強化專案總覽 (GEMINI.md) 同步機制**
+*   **Prompt / 需求**：解決 `GEMINI.md` 未能隨開發進度同步更新的問題。
+*   **Action**：手動補齊 `GEMINI.md` 進度，重構 Hook 為雙軌制（框架軌道 vs 開發軌道）。
+*   **Result**：建立了專案框架與開發進度解耦但同步的智慧審核機制。
+
+**[5] 雙軌化 Hook 架構重構 (Dual-Track Refactoring)**
+*   **Prompt / 需求**：收斂 Hook 需求，明確區分 `GEMINI.md` (框架) 與 `.spec/PRD.md` (開發實作) 的職責。
+*   **Action**：重構 `sync-check.js` 邏輯為兩大獨立軌道，並優化子代理提示詞。
+*   **Result**：Hook 設計現在能精準守護專案的文檔分層體系。
+
+**[6] 導入 Tampermonkey GitHub 專案最佳實踐**
+*   **Prompt / 需求**：實作應遵循 Tampermonkey 專業開發規範。
+*   **Action**：
+    1.  完善 Metadata Header：加入 `@license`、`@supportURL`、`@run-at` 與精確的 `@namespace`。
+    2.  CSS 模組化：改用 `GM_addStyle` 替代內嵌 style，並優化 UI 互動樣式（hover/active 效果）。
+    3.  健壯性優化：在 `DomManager` 中加入空值檢查與類別管理，提升 DOM 操作的安全性。
+    4.  構建系統升級：`build.js` 現在能自動同步 `package.json` 版本至腳本 Header。
+*   **Result**：代碼結構達到專業 Userscript 儲存庫標準，且全數通過 TDD 驗證。
+
 ---
 
 ## 🏛️ 里程碑摘要 (Archived Milestones)

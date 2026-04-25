@@ -18,15 +18,20 @@ To use this code:
 ```javascript
 // ==UserScript==
 // @name         極簡沉浸式翻譯 (Gemini API 專用版)
-// @namespace    http://tampermonkey.net
-// @version      1.1
+// @namespace    https://github.com/yolo-cat/mini-translation
+// @version      1.2.0
 // @description  使用自備 Gemini API 實現沉浸式上下對照翻譯，具備物理沙盒隔離防外洩保護
+// @author       Gemini CLI
 // @match        *://*/*
 // @connect      generativelanguage.googleapis.com
 // @grant        GM_xmlhttpRequest
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
+// @grant        GM_addStyle
+// @license      MIT
+// @run-at       document-idle
+// @supportURL   https://github.com/yolo-cat/mini-translation/issues
 // ==/UserScript==
 
 var ImmersiveTranslation = (() => {
@@ -87,6 +92,21 @@ ${text}` }]
 
   // src/DomManager.js
   var DomManager = {
+    init() {
+      GM_addStyle(`
+            .immersive-translate-node {
+                color: #6b7280;
+                font-size: 0.95em;
+                margin-top: 4px;
+                margin-bottom: 12px;
+                display: block;
+                transition: opacity 0.3s ease;
+            }
+            .immersive-translate-loading {
+                opacity: 0.5;
+            }
+        `);
+    },
     extractParagraphs() {
       return Array.from(document.querySelectorAll("p")).filter((p) => {
         const text = p.innerText.trim();
@@ -94,27 +114,30 @@ ${text}` }]
       });
     },
     injectTranslation(originNode, translationText) {
+      if (!originNode) return;
       const translationNode = document.createElement("div");
       translationNode.className = "immersive-translate-node";
       translationNode.textContent = translationText;
-      translationNode.style.color = "#6b7280";
-      translationNode.style.fontSize = "0.95em";
-      translationNode.style.marginTop = "4px";
-      translationNode.style.marginBottom = "12px";
       originNode.parentNode.insertBefore(translationNode, originNode.nextSibling);
       originNode.dataset.translated = "true";
     },
     setLoadingState(originNode, isLoading) {
-      originNode.style.opacity = isLoading ? "0.5" : "1";
+      if (!originNode) return;
+      if (isLoading) {
+        originNode.classList.add("immersive-translate-loading");
+      } else {
+        originNode.classList.remove("immersive-translate-loading");
+      }
     }
   };
 
   // src/UiController.js
   var UiController = {
     initFloatButton() {
+      DomManager.init();
       const config = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
       const pos = GM_getValue("IMMERSIVE_POS", { x_percent: 90, y_percent: 85 });
-      GM_registerMenuCommand("設定 API 密鑰", () => {
+      GM_registerMenuCommand("⚙️ 設定 API 密鑰", () => {
         const currentConfig = GM_getValue("IMMERSIVE_CONFIG", DEFAULT_CONFIG);
         const key = prompt("請輸入您的 Google Gemini API Key:", currentConfig.api_key);
         if (key) {
@@ -122,53 +145,82 @@ ${text}` }]
           GM_setValue("IMMERSIVE_CONFIG", currentConfig);
         }
       });
+      GM_addStyle(`
+            #immersive-translate-btn {
+                position: fixed;
+                width: 44px;
+                height: 44px;
+                background: #2563eb;
+                color: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 2147483647;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                user-select: none;
+                font-weight: bold;
+                font-family: system-ui, -apple-system, sans-serif;
+                transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s;
+            }
+            #immersive-translate-btn:hover {
+                background: #1d4ed8;
+                transform: scale(1.1);
+            }
+            #immersive-translate-btn:active {
+                transform: scale(0.95);
+            }
+        `);
       const btn = document.createElement("div");
+      btn.id = "immersive-translate-btn";
       btn.innerText = "譯";
-      btn.style.cssText = `
-            position: fixed; left: ${pos.x_percent}%; top: ${pos.y_percent}%;
-            width: 40px; height: 40px; background: #2563eb; color: white;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 999999; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            user-select: none; font-weight: bold; font-family: sans-serif;
-        `;
+      btn.style.left = `${pos.x_percent}%`;
+      btn.style.top = `${pos.y_percent}%`;
       document.body.appendChild(btn);
+      this.bindDragEvents(btn);
+      btn.addEventListener("click", () => {
+        if (!btn.dataset.dragging) {
+          this.executeTranslation();
+        }
+      });
+    },
+    bindDragEvents(btn) {
       let isDragging = false;
       btn.addEventListener("mousedown", (e) => {
         isDragging = false;
+        btn.dataset.dragging = "";
         e.preventDefault();
         const shiftX = e.clientX - btn.getBoundingClientRect().left;
         const shiftY = e.clientY - btn.getBoundingClientRect().top;
-        function moveAt(pageX, pageY) {
+        const onMouseMove = (e2) => {
           isDragging = true;
-          const x_percent = Math.min(Math.max(0, (pageX - shiftX) / window.innerWidth * 100), 95);
-          const y_percent = Math.min(Math.max(0, (pageY - shiftY) / window.innerHeight * 100), 95);
+          btn.dataset.dragging = "true";
+          const x_percent = Math.min(Math.max(0, (e2.clientX - shiftX) / window.innerWidth * 100), 95);
+          const y_percent = Math.min(Math.max(0, (e2.clientY - shiftY) / window.innerHeight * 100), 95);
           btn.style.left = x_percent + "%";
           btn.style.top = y_percent + "%";
-        }
-        function onMouseMove(e2) {
-          moveAt(e2.clientX, e2.clientY);
-        }
+        };
         document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", function onMouseUp(e2) {
+        document.addEventListener("mouseup", () => {
           document.removeEventListener("mousemove", onMouseMove);
-          document.removeEventListener("mouseup", onMouseUp);
           if (isDragging) {
             const finalX = parseFloat(btn.style.left);
             const finalY = parseFloat(btn.style.top);
             GM_setValue("IMMERSIVE_POS", { x_percent: finalX, y_percent: finalY });
+            setTimeout(() => {
+              delete btn.dataset.dragging;
+            }, 50);
+          } else {
+            delete btn.dataset.dragging;
           }
-        });
-      });
-      btn.addEventListener("click", () => {
-        if (!isDragging) {
-          this.executeTranslation();
-        }
+        }, { once: true });
       });
     },
     async executeTranslation() {
       const paragraphs = DomManager.extractParagraphs();
       if (paragraphs.length === 0) {
-        alert("沒有發現需要翻譯的新段落！");
+        console.log("No new paragraphs found to translate.");
         return;
       }
       for (const p of paragraphs) {
@@ -177,7 +229,7 @@ ${text}` }]
           const translatedText = await LlmService.translate(p.innerText.trim());
           DomManager.injectTranslation(p, translatedText);
         } catch (error) {
-          console.error("翻譯失敗:", error);
+          console.error("[Immersive Translation] 翻譯失敗:", error);
         } finally {
           DomManager.setLoadingState(p, false);
         }
@@ -191,6 +243,7 @@ ${text}` }]
     UiController.initFloatButton();
   })();
 })();
+
 ```
 
 ## ---

@@ -1,6 +1,6 @@
 {
   "name": "mini-translation",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "type": "module",
   "description": "Minimal Immersive Translation for Gemini API",
   "main": "src/index.js",

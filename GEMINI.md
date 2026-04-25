@@ -1,38 +1,36 @@
 # Immersive Translation Userscript Project
 
 ## Project Overview
-This repository contains the specifications, design documents, and the initial MVP code for a Tampermonkey userscript named "極簡沉浸式翻譯 (Gemini API 專用版)". The project's goal is to build a lightweight, secure browser extension that translates web page paragraphs into Traditional Chinese using a user-provided Google Gemini API key. It features a floating action button for in-place dual-language reading and emphasizes physical sandbox isolation to prevent API key leaks. The documentation follows a Behavior-Driven Development (BDD) and Test-Driven Development (TDD) approach, focusing on state-boundary testing.
+這是一個為 Tampermonkey 設計的輕量級、具備物理沙盒隔離的沉浸式翻譯腳本。利用 Google Gemini API 將網頁段落翻譯為繁體中文，並以雙語對照方式呈現。
 
-## Directory Structure & Key Files
-*   **.spec/**: The core documentation defining the project.
-    *   `PRD.md`: Product Requirements Document (BDD format). Defines core value, business rules (dual-language display, fail-safe mechanisms), and out-of-scope features for the MVP.
-    *   `SPEC.md`: System Design Document (SDD format). Specifies data schema (config, UI position), API interfaces (using `GM_xmlhttpRequest`), and component responsibilities (`LlmService`, `DomManager`, `UiController`).
-    *   `TEST.md`: Test-Driven Development plan. Outlines tests for API responses, timeouts, sandbox isolation (preventing `window.fetch` overrides), DOM injection, and XSS prevention.
-    *   `CODE.md`: The MVP Tampermonkey userscript code implementing the specifications, including native timeout handling and DOM security measures.
-*   **.agents/skills/tampermonkey/**: Contains expert guidance and reference material for writing Tampermonkey userscripts.
-*   `GEMINI.md`: This file, providing project context.
+## 📂 Directory Structure & Key Files
+*   **.spec/**: 核心開發規格與追溯文檔 (SSOT)。
+    *   `PRD.md`: 需求書 (BDD 模式)。
+    *   `SPEC.md`: 系統設計規格 (SDD 模式)。
+    *   `TEST.md`: TDD 測試計畫。
+    *   `CODE.md`: 最終編譯產出的 Userscript 代碼。
+    *   `PLAN.md`: 實作計畫執行追蹤。
+    *   `session_log.md`: 開發進度與 Prompt 追溯日誌（Rolling Window 設計）。
+*   **src/**: 模組化原始碼。
+    *   `LlmService.js`, `DomManager.js`, `UiController.js`, `config.js`.
+*   **tests/**: Jest 測試套件，確保 TDD 流程。
+*   **dist/**: 構建產物目錄。
+*   **.gemini/hooks/**: 專案自動化 Hook，確保代碼與文檔同步。
 
-## Development Conventions
-*   **Tampermonkey Best Practices**: Strict adherence to security (`@connect` constraints, `textContent` over `innerHTML` for XSS prevention) and state management (`GM_setValue`/`GM_getValue`) guidelines.
-*   **Test-Driven Development (TDD)**: Development requires writing tests (mocking `GM_*` APIs and using JSDOM) before implementing business logic.
-*   **Physical Isolation**: Relies on the native Tampermonkey sandbox (`GM_xmlhttpRequest`) rather than frontend encryption to protect API keys from host webpage interception.
+## 🛠️ Development Environment
+*   **Runtime**: Node.js (ESM).
+*   **Testing**: Jest + JSDOM.
+*   **Bundler**: esbuild (用於將模組封裝為 IIFE Userscript)。
+*   **Command**: `npm test` (驗證邏輯), `npm run build` (構建腳本)。
 
-## AI Agent Loop Workflow (Hooks)
-本專案導入了 **Gemini CLI Hooks** 攔截機制，確保「持續改進」與「文件同步」：
-*   **Sync Check Hook**: 監聽 `AfterTool`, `BeforeAgent`, `AfterAgent` 事件。
-*   **強制同步規則**: 當 AI 修改了 `.spec/CODE.md` 時，Hook 會要求同回合內必須同步更新 `.spec/TEST.md` 或 `GEMINI.md`。
-*   **自癒迴圈**: 若 AI 忘記更新文件，`AfterAgent` Hook 會自動攔截並退回重做，確保代碼與規格永遠同步。
+## 🤖 AI Agent Loop Workflow (Hooks)
+本專案透過 **Gemini CLI Hooks** 強制執行「文檔驅動開發」：
+*   **Sync Check Hook**: 監聽代碼與結構變更。
+*   **智慧審核機制**: 當偵測到重大變更但未同步更新 `.spec/` 或 `GEMINI.md` 時，Hook 會自動喚醒 `@generalist` 子代理進行語意審核，決定是否放行或要求補齊文檔。
+*   **物理隔離原則**: API Key 僅存於本地 `.env` 或油猴儲存，Hook 審核流程透過 CLI 內建 Subagent 執行，無需暴露 API Key。
 
-## Usage & Building
-The primary artifact is the userscript located in `.spec/CODE.md`.
-**Build Status**: Modularized with TDD verification (All tests passed).
-
-To use the script:
-1. Install the Tampermonkey extension.
-2. Create a new script in the Tampermonkey dashboard.
-3. Copy the contents of the `// ==UserScript==` block and the IIFE function from `.spec/CODE.md`.
-4. Save the script.
-5. On an English webpage, click the Tampermonkey icon, select "設定 API 密鑰", and enter your Google Gemini API Key.
-6. Use the floating "譯" button to translate text.
-
-For development and testing, refer to `PLAN.md` (to be created) for the Node.js/Jest/JSDOM setup.
+## 🚀 Usage
+1. 安裝 Tampermonkey。
+2. 從 `.spec/CODE.md` 複製代碼至新腳本。
+3. 於網頁選單「設定 API 密鑰」輸入 Gemini API Key。
+4. 點擊懸浮「譯」按鈕進行沉浸式翻譯。

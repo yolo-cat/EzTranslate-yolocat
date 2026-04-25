@@ -2,9 +2,10 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Gemini CLI Hook: Sync Check (Subagent-Optimized)
- * 負責追蹤文件變更，並在需要時透過 invoke_agent (Subagent) 進行智慧審核。
- * 優點：不需在腳本中管理 API Key，利用 CLI 內建的 Subagent 進行語意分析。
+ * Gemini CLI Hook: Sync Check (Dual-Track Architecture)
+ * 負責守護雙層文檔架構：
+ * 1. 專案框架 (Project Framework): 結構變更必須同步至 GEMINI.md
+ * 2. 開發方向 (Development Sync): 代碼變更必須回歸 .spec/PRD.md，並在 .spec/ 中漸進揭露
  */
 
 const STATE_FILE = path.join(__dirname, '../modified_files.json');
@@ -38,6 +39,11 @@ async function getStdin() {
 
 const event = process.argv[2];
 
+// 判斷某個檔案是否匹配前綴
+function hasPrefix(state, prefix) {
+    return Object.keys(state).some(file => file.startsWith(prefix));
+}
+
 async function main() {
     const input = await getStdin();
     let state = readState();
@@ -54,40 +60,64 @@ async function main() {
             break;
 
         case 'BeforeAgent':
-            const codeChanged = state['.spec/CODE.md'];
-            const docsUpdated = state['.spec/TEST.md'] || state['.spec/SPEC.md'] || state['.spec/PRD.md'] || state['.spec/session_log.md'] || state['GEMINI.md'];
+            // 軌道 A: 專案框架變更 (Project Framework)
+            const hasFrameworkChange = state['package.json'] || state['build.js'] || state['jest.config.cjs'] || hasPrefix(state, '.gemini/hooks/');
+            const frameworkUpdated = state['GEMINI.md'];
+
+            // 軌道 B: 開發代碼變更 (Development Sync)
+            const hasCodeChange = state['.spec/CODE.md'] || hasPrefix(state, 'src/') || hasPrefix(state, 'tests/');
+            const specUpdated = state['.spec/PRD.md'] || state['.spec/SPEC.md'] || state['.spec/TEST.md'] || state['.spec/session_log.md'];
 
             let additionalContext = "";
-            if (codeChanged && !docsUpdated) {
-                additionalContext = "⚠️ 系統提示：偵測到你修改了 .spec/CODE.md，若涉及重要邏輯變更，請同步更新文檔。";
+            if (hasFrameworkChange && !frameworkUpdated) {
+                additionalContext += "⚠️ 系統提示：偵測到專案結構變更。請確保 GEMINI.md 已同步更新以反映最新專案框架。\n";
+            }
+            if (hasCodeChange && !specUpdated) {
+                additionalContext += "⚠️ 系統提示：偵測到代碼變更。請依據 .spec/PRD.md 的業務邏輯，漸進式更新 SPEC.md, TEST.md 或 session_log.md。\n";
             }
 
             process.stdout.write(JSON.stringify({
                 hookSpecificOutput: {
                     hookEventName: "BeforeAgent",
-                    additionalContext: additionalContext
+                    additionalContext: additionalContext.trim()
                 }
             }));
             break;
 
         case 'AfterAgent':
-            const hasCodeChange = state['.spec/CODE.md'];
-            const hasDocUpdate = state['.spec/TEST.md'] || state['.spec/SPEC.md'] || state['.spec/PRD.md'] || state['.spec/session_log.md'] || state['GEMINI.md'];
+            // 軌道 A: 專案框架變更 (Project Framework)
+            const frameworkChange = state['package.json'] || state['build.js'] || state['jest.config.cjs'] || hasPrefix(state, '.gemini/hooks/');
+            const frameworkSync = state['GEMINI.md'];
 
-            if (hasCodeChange && !hasDocUpdate) {
-                // 利用 AfterAgent 的 block 決策與 @ 語法觸發 subagent 審核
-                // 這裡我們不直接 block 並結束，而是要求 subagent 介入判定
+            // 軌道 B: 開發代碼變更 (Development Sync)
+            const codeChange = state['.spec/CODE.md'] || hasPrefix(state, 'src/') || hasPrefix(state, 'tests/');
+            const specSync = state['.spec/PRD.md'] || state['.spec/SPEC.md'] || state['.spec/TEST.md'] || state['.spec/session_log.md'];
+
+            // 優先處理框架級別的失步
+            if (frameworkChange && !frameworkSync) {
                 process.stdout.write(JSON.stringify({
                     decision: "block",
-                    reason: "@generalist 請審核我剛才對 .spec/CODE.md 的變更。若這是「重大變更」（如 API、核心邏輯改動），請要求我更新文檔；若只是「微小變更」（如註解、排版），則請回覆『ALLOW_TRIVIAL_CHANGE』並允許我通過。",
-                    systemMessage: "🚀 正在調用 subagent 進行智慧比對..."
+                    reason: "@generalist 偵測到專案結構、依賴或 Hook 工具鏈發生變更，但作為專案戰略地圖的 `GEMINI.md` 未能同步更新。請審核這些結構性變更，並強制要求開發者將新的環境配置或工具鏈決策寫入 `GEMINI.md`，以維持專案總覽的絕對準確性。",
+                    systemMessage: "🚀 正在啟動「專案框架 (Project Framework)」同步審核..."
                 }));
-            } else {
-                saveState({});
-                process.stdout.write(JSON.stringify({
-                    decision: "continue"
-                }));
+                return;
             }
+
+            // 接著處理開發級別的失步
+            if (codeChange && !specSync) {
+                process.stdout.write(JSON.stringify({
+                    decision: "block",
+                    reason: "@generalist 偵測到原始碼 (`src/` 或 `CODE.md`) 發生變更，但未能在 `.spec/` 目錄下留下任何漸進式的紀錄。請以 `.spec/PRD.md` 為最高業務準則審核此代碼變更：\n1. 若為重大邏輯更動，請要求同步修改 `SPEC.md` 或 `TEST.md`。\n2. 若為微小修正或一般重構，請要求至少在 `session_log.md` 中補齊開發歷程。\n3. 若判斷完全不需任何紀錄，請回覆『ALLOW_TRIVIAL_CHANGE』放行。",
+                    systemMessage: "🚀 正在啟動「開發方向與漸進揭露 (Development Sync)」審核..."
+                }));
+                return;
+            }
+
+            // 雙軌皆通過
+            saveState({});
+            process.stdout.write(JSON.stringify({
+                decision: "continue"
+            }));
             break;
 
         default:
